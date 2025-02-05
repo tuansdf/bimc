@@ -18,10 +18,20 @@ const optimizeImage = async (
   height?: number,
 ) => {
   try {
-    const result = await sharp(inputPath)
-      .resize(width && height ? { width, height } : undefined)
-      .toFormat(fileType, { quality })
-      .toBuffer();
+    let temp = sharp(inputPath);
+    if (width && height) {
+      temp = temp.resize({ width, height, withoutEnlargement: true });
+    }
+    if (fileType === "jpeg" || fileType === "jpg") {
+      temp = temp.jpeg({ quality, mozjpeg: true, force: true });
+    } else if (fileType === "webp") {
+      temp = temp.webp({ quality, force: true });
+    } else if (fileType === "png") {
+      temp = temp.png({ quality, force: true });
+    } else {
+      temp = temp.toFormat(fileType, { quality });
+    }
+    const result = await temp.toBuffer();
     console.log(`Optimized: ${inputPath}`);
     return result;
   } catch (error) {
@@ -51,10 +61,10 @@ const processImage = async (
     }
     if (!width || !height) {
       if (!width) {
-        width = height! * (metadata.width / metadata.height);
+        width = Math.floor(height! * (metadata.width / metadata.height));
       }
       if (!height) {
-        height = width! * (metadata.height / metadata.width);
+        height = Math.floor(width! * (metadata.height / metadata.width));
       }
     }
   }
@@ -132,7 +142,6 @@ const main = () => {
   }
   args.inputPaths.forEach((path) =>
     args.dimensions.forEach((dimension) => {
-      console.log(dimension);
       processPath(
         path,
         args.outputPath,

@@ -1,4 +1,4 @@
-import type { OUTPUT_FILE_TYPES } from "./constants.js";
+import type { SUPPORTED_OUTPUT_FILE_TYPES } from "./constants.js";
 
 export type Args = Readonly<{
   inputPaths: string[];
@@ -10,4 +10,4 @@ export type Args = Readonly<{
   dimensions: { width: number; height: number }[];
 }>;
 
-export type OutputFileType = (typeof OUTPUT_FILE_TYPES)[number];
+export type OutputFileType = (typeof SUPPORTED_OUTPUT_FILE_TYPES)[number];

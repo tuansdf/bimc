@@ -1,6 +1,11 @@
-export const OUTPUT_FILE_TYPES = ["jpg", "jpeg", "png", "webp"] as const;
+export const SUPPORTED_OUTPUT_FILE_TYPES = [
+  "jpg",
+  "jpeg",
+  "png",
+  "webp",
+] as const;
 
-export const IMAGE_MIME_TYPES = [
+export const SUPPORTED_IMAGE_MIME_TYPES = [
   "image/jpeg",
   "image/png",
   "image/webp",
