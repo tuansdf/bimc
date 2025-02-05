@@ -2,22 +2,28 @@ import fs from "fs/promises";
 import path from "path";
 import sharp from "sharp";
 import { args } from "./argv.js";
-import type { ValidOutputFormat } from "./types.js";
+import { FileNameFormatKeys } from "./constants.js";
+import type { OutputFileType } from "./types.js";
 import { checkIsImage } from "./utils.js";
 
-if (!(await fs.exists(args.output))) {
-  await fs.mkdir(args.output, { recursive: true });
+if (!(await fs.exists(args.outputPath))) {
+  await fs.mkdir(args.outputPath, { recursive: true });
 }
 
 const optimizeImage = async (
   inputPath: string,
-  outputPath: string,
-  format: ValidOutputFormat,
+  fileType: OutputFileType,
   quality: number,
+  width?: number,
+  height?: number,
 ) => {
   try {
-    await sharp(inputPath).toFormat(format, { quality }).toFile(outputPath);
-    console.log(`Optimized: ${outputPath}`);
+    const result = await sharp(inputPath)
+      .resize(width && height ? { width, height } : undefined)
+      .toFormat(fileType, { quality })
+      .toBuffer();
+    console.log(`Optimized: ${inputPath}`);
+    return result;
   } catch (error) {
     console.error(`Error optimizing ${inputPath}:`, error);
   }
@@ -26,45 +32,85 @@ const optimizeImage = async (
 const processImage = async (
   inputPath: string,
   outputDir: string,
-  format: ValidOutputFormat,
+  fileType: OutputFileType,
   quality: number,
   override: boolean,
+  width?: number,
+  height?: number,
 ) => {
   const isImage = await checkIsImage(inputPath);
   if (!isImage) {
     console.info(`Skipping non-image file: ${inputPath}`);
   }
+  const originalFileName = path.parse(inputPath).name;
+  const metadata = await sharp(inputPath).metadata();
+  if (metadata.width && metadata.height) {
+    if (!width && !height) {
+      width = metadata.width;
+      height = metadata.height;
+    }
+    if (!width || !height) {
+      if (!width) {
+        width = height! * (metadata.width / metadata.height);
+      }
+      if (!height) {
+        height = width! * (metadata.height / metadata.width);
+      }
+    }
+  }
   let outputPath = path.join(
     outputDir,
-    `${path.parse(inputPath).name}.${format}`,
+    args.fileNameFormat
+      .replace(FileNameFormatKeys.TITLE, originalFileName)
+      .replace(FileNameFormatKeys.QUALITY, String(quality)),
   );
-  if (!override && (await fs.exists(outputPath))) {
-    outputPath = path.join(
-      outputDir,
-      `${path.parse(inputPath).name}-optimized.${format}`,
-    );
+  if (width) {
+    outputPath = outputPath.replace(FileNameFormatKeys.WIDTH, String(width));
   }
-  await optimizeImage(inputPath, outputPath, format, quality);
+  if (height) {
+    outputPath = outputPath.replace(FileNameFormatKeys.HEIGHT, String(height));
+  }
+  if (!override && (await fs.exists(`${outputPath}.${fileType}`))) {
+    outputPath += `-optimized.${fileType}`;
+  } else {
+    outputPath += `.${fileType}`;
+  }
+  const file = await optimizeImage(inputPath, fileType, quality, width, height);
+  if (file) {
+    await fs.writeFile(outputPath, file);
+  }
 };
 
 const processPath = async (
   inputPath: string,
   outputDir: string,
-  format: ValidOutputFormat,
+  fileType: OutputFileType,
   quality: number,
   override: boolean,
+  width?: number,
+  height?: number,
 ) => {
   if ((await fs.lstat(inputPath)).isFile()) {
-    await processImage(inputPath, outputDir, format, quality, override);
+    await processImage(
+      inputPath,
+      outputDir,
+      fileType,
+      quality,
+      override,
+      width,
+      height,
+    );
   } else if ((await fs.lstat(inputPath)).isDirectory()) {
     const files = await fs.readdir(inputPath);
     files.forEach((file) => {
       processImage(
         path.join(inputPath, file),
         outputDir,
-        format,
+        fileType,
         quality,
         override,
+        width,
+        height,
       );
     });
   } else {
@@ -73,8 +119,30 @@ const processPath = async (
 };
 
 const main = () => {
-  args.input.forEach((path) =>
-    processPath(path, args.output, args.format, args.quality, args.override),
+  if (!args.dimensions.length) {
+    args.inputPaths.forEach((path) =>
+      processPath(
+        path,
+        args.outputPath,
+        args.fileType,
+        args.quality,
+        args.override,
+      ),
+    );
+  }
+  args.inputPaths.forEach((path) =>
+    args.dimensions.forEach((dimension) => {
+      console.log(dimension);
+      processPath(
+        path,
+        args.outputPath,
+        args.fileType,
+        args.quality,
+        args.override,
+        dimension.width,
+        dimension.height,
+      );
+    }),
   );
 };
 

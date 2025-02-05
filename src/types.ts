@@ -1,11 +1,13 @@
-import type { VALID_OUTPUT_FORMATS } from "./constants.js";
+import type { OUTPUT_FILE_TYPES } from "./constants.js";
 
 export type Args = Readonly<{
-  input: string[];
-  output: string;
-  format: ValidOutputFormat;
+  inputPaths: string[];
+  outputPath: string;
+  fileType: OutputFileType;
   quality: number;
   override: boolean;
+  fileNameFormat: string;
+  dimensions: { width: number; height: number }[];
 }>;
 
-export type ValidOutputFormat = (typeof VALID_OUTPUT_FORMATS)[number];
+export type OutputFileType = (typeof OUTPUT_FILE_TYPES)[number];

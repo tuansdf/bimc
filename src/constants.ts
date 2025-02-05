@@ -1,6 +1,6 @@
-export const VALID_OUTPUT_FORMATS = ["jpg", "jpeg", "png", "webp"] as const;
+export const OUTPUT_FILE_TYPES = ["jpg", "jpeg", "png", "webp"] as const;
 
-export const VALID_IMAGE_MIME_TYPES = [
+export const IMAGE_MIME_TYPES = [
   "image/jpeg",
   "image/png",
   "image/webp",
@@ -8,3 +8,10 @@ export const VALID_IMAGE_MIME_TYPES = [
   "image/heif",
   "image/tiff",
 ] as const;
+
+export const FileNameFormatKeys = {
+  TITLE: "[title]",
+  QUALITY: "[quality]",
+  WIDTH: "[width]",
+  HEIGHT: "[height]",
+};

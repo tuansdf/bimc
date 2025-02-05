@@ -1,17 +1,23 @@
 import path from "path";
 import { parseArgs } from "util";
-import { VALID_IMAGE_MIME_TYPES, VALID_OUTPUT_FORMATS } from "./constants.js";
-import type { Args, ValidOutputFormat } from "./types.js";
+import {
+  FileNameFormatKeys,
+  IMAGE_MIME_TYPES,
+  OUTPUT_FILE_TYPES,
+} from "./constants.js";
+import type { Args, OutputFileType } from "./types.js";
 
 const help = `
 Usage: imgcps [options]
 
 Options:
-  -i, --input <input>       Input file or directory. Support: ${VALID_IMAGE_MIME_TYPES.join(", ")} (default: current directory)
-  -o, --output <output>     Output directory (default: current directory)
-  -f, --format <format>     Output format. Values: ${VALID_OUTPUT_FORMATS.join(", ")} (default: webp)
-  -q, --quality <quality>   Values: 0 - 100 (default: 80)
-  --override <override>     To override the file or not. If you do not wish to override the file, and the file names conflict, append a timestamp to the file names (default: false)
+  -i, --input <input>               Input file or directory. Support: ${IMAGE_MIME_TYPES.join(", ")} (default: current directory)
+  -o, --output <output>             Output directory (default: current directory)
+  -t, --type <type>                 Output file type. Values: ${OUTPUT_FILE_TYPES.join(", ")} (default: webp)
+  -d, --dimension <dimension>       If width and heigth are specified, images will be croped accordingly. If either width or height is specified, the scale will be kept. Values: [width]x[height]. Example: 600x800, x800, 600x
+  -q, --quality <quality>           Values: 0 - 100 (default: 80)
+  --file-name <format>              Format for the output file name. Accepted keys: ${Object.values(FileNameFormatKeys).join(", ")}. Example: [title]-w[width]-h[height]-q[quality] (default: [title])
+  --override <override>             To override the file or not. If you do not wish to override the file, and the file names conflict, append "-optimized" to the file names (default: false)
 `;
 
 export const showHelp = () => {
@@ -33,11 +39,22 @@ const { values } = parseArgs({
       multiple: false,
       default: process.cwd(),
     },
-    format: {
+    type: {
       type: "string",
       short: "f",
       multiple: false,
       default: "webp",
+    },
+    dimension: {
+      type: "string",
+      short: "d",
+      multiple: true,
+      default: [],
+    },
+    "file-name": {
+      type: "string",
+      multiple: false,
+      default: FileNameFormatKeys.TITLE,
     },
     quality: {
       type: "string",
@@ -52,7 +69,7 @@ const { values } = parseArgs({
     },
     help: {
       type: "boolean",
-      short: "h",
+      short: "q",
       multiple: false,
       default: false,
     },
@@ -66,19 +83,46 @@ const validateArgs = (): Args => {
     showHelp();
     process.exit(0);
   }
-  if (!VALID_OUTPUT_FORMATS.includes(values.format as any)) {
-    console.error("Invalid output format");
+  if (!OUTPUT_FILE_TYPES.includes(values.type as any)) {
+    console.error("Invalid output file format");
     showHelp();
     process.exit(1);
   }
+  if (!Number(values.quality) || Number(values.quality) <= 0) {
+    console.error("Invalid quality");
+    showHelp();
+    process.exit(1);
+  }
+  const dimensions = values.dimension.map((dimension) => {
+    try {
+      const split = dimension.split("x");
+      const result = {
+        width: Number(split[0].trim()),
+        height: Number(split[1].trim()),
+      };
+      if (
+        (!result.width || result.width <= 0) &&
+        (!result.height || result.height <= 0)
+      ) {
+        throw new Error();
+      }
+      return result;
+    } catch (e) {
+      console.error("Invalid dimension");
+      showHelp();
+      process.exit(1);
+    }
+  });
   return {
-    input: values.input.map((filePath) =>
+    inputPaths: values.input.map((filePath) =>
       path.resolve(process.cwd(), filePath),
     ),
-    output: path.resolve(process.cwd(), values.output),
-    format: values.format as ValidOutputFormat,
+    outputPath: path.resolve(process.cwd(), values.output),
+    fileType: values.type as OutputFileType,
     quality: Number(values.quality),
     override: values.override,
+    fileNameFormat: values["file-name"],
+    dimensions,
   };
 };
 
