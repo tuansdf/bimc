@@ -128,7 +128,7 @@ const processPath = async (
   }
 };
 
-const main = () => {
+export const cli = () => {
   if (!args.dimensions.length) {
     args.inputPaths.forEach((path) =>
       processPath(
@@ -154,5 +154,3 @@ const main = () => {
     }),
   );
 };
-
-main();

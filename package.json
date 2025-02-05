@@ -1,7 +1,11 @@
 {
-  "name": "imgcps",
-  "module": "src/index.ts",
+  "name": "bimc",
+  "version": "1.0.0",
+  "module": "bin/bimc.ts",
   "type": "module",
+  "scripts": {
+    "build": "bun scripts/build.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },

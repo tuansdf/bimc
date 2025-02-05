@@ -8,7 +8,7 @@ import {
 import type { Args, OutputFileType } from "./types.js";
 
 const help = `
-Usage: imgcps [options]
+Usage: bimc [options]
 
 Options:
   -i, --input <input>               Input file or directory. Support: ${SUPPORTED_IMAGE_MIME_TYPES.join(", ")} (default: current directory)

@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "imgcps",
+      "name": "bimc",
       "dependencies": {
         "file-type": "^20.0.1",
         "sharp": "^0.33.5",

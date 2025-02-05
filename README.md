@@ -1,4 +1,4 @@
-# imgcps
+# bimc
 
 To install dependencies:
 
