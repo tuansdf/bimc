@@ -101,27 +101,11 @@ const processPath = async (
   height?: number,
 ) => {
   if ((await fs.lstat(inputPath)).isFile()) {
-    await processImage(
-      inputPath,
-      outputDir,
-      fileType,
-      quality,
-      override,
-      width,
-      height,
-    );
+    await processImage(inputPath, outputDir, fileType, quality, override, width, height);
   } else if ((await fs.lstat(inputPath)).isDirectory()) {
     const files = await fs.readdir(inputPath);
     files.forEach((file) => {
-      processImage(
-        path.join(inputPath, file),
-        outputDir,
-        fileType,
-        quality,
-        override,
-        width,
-        height,
-      );
+      processImage(path.join(inputPath, file), outputDir, fileType, quality, override, width, height);
     });
   } else {
     console.error("Invalid input path");
@@ -130,27 +114,11 @@ const processPath = async (
 
 export const cli = () => {
   if (!args.dimensions.length) {
-    args.inputPaths.forEach((path) =>
-      processPath(
-        path,
-        args.outputPath,
-        args.fileType,
-        args.quality,
-        args.override,
-      ),
-    );
+    args.inputPaths.forEach((path) => processPath(path, args.outputPath, args.fileType, args.quality, args.override));
   }
   args.inputPaths.forEach((path) =>
     args.dimensions.forEach((dimension) => {
-      processPath(
-        path,
-        args.outputPath,
-        args.fileType,
-        args.quality,
-        args.override,
-        dimension.width,
-        dimension.height,
-      );
+      processPath(path, args.outputPath, args.fileType, args.quality, args.override, dimension.width, dimension.height);
     }),
   );
 };

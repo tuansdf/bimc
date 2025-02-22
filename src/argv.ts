@@ -1,10 +1,6 @@
 import path from "path";
 import { parseArgs } from "util";
-import {
-  FileNameFormatKeys,
-  SUPPORTED_IMAGE_MIME_TYPES,
-  SUPPORTED_OUTPUT_FILE_TYPES,
-} from "./constants.js";
+import { FileNameFormatKeys, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_OUTPUT_FILE_TYPES } from "./constants.js";
 import type { Args, OutputFileType } from "./types.js";
 
 const help = `
@@ -16,7 +12,7 @@ Options:
   -t, --type <type>                 Output file type. Values: ${SUPPORTED_OUTPUT_FILE_TYPES.join(", ")} (default: webp)
   -d, --dimension <dimension>       If width and heigth are specified, images will be croped accordingly. If either width or height is specified, the scale will be kept. Values: [width]x[height]. Example: 600x800, x800, 600x
   -q, --quality <quality>           Values: 1 - 100 (default: 70)
-  --file-name <format>              Format for the output file name. Accepted keys: ${Object.values(FileNameFormatKeys).join(", ")}. Example: ${FileNameFormatKeys.TITLE}-w${FileNameFormatKeys.QUALITY}-h${FileNameFormatKeys.HEIGHT}-q${FileNameFormatKeys.QUALITY} (default: ${FileNameFormatKeys.TITLE})
+  --file-name <format>              Format for the output file name. Accepted keys: ${Object.values(FileNameFormatKeys).join(", ")}. Example: ${FileNameFormatKeys.TITLE}-w${FileNameFormatKeys.WIDTH}-h${FileNameFormatKeys.HEIGHT}-q${FileNameFormatKeys.QUALITY} (default: ${FileNameFormatKeys.TITLE})
   --override <override>             To override the file or not. If you do not wish to override the file, and the file names conflict, append "-optimized" to the file names (default: false)
 `;
 
@@ -41,7 +37,7 @@ const { values } = parseArgs({
     },
     type: {
       type: "string",
-      short: "f",
+      short: "t",
       multiple: false,
       default: "webp",
     },
@@ -53,6 +49,7 @@ const { values } = parseArgs({
     },
     "file-name": {
       type: "string",
+      short: "f",
       multiple: false,
       default: FileNameFormatKeys.TITLE,
     },
@@ -69,7 +66,7 @@ const { values } = parseArgs({
     },
     help: {
       type: "boolean",
-      short: "q",
+      short: "h",
       multiple: false,
       default: false,
     },
@@ -88,11 +85,7 @@ const validateArgs = (): Args => {
     showHelp();
     process.exit(1);
   }
-  if (
-    !Number(values.quality) ||
-    Number(values.quality) < 1 ||
-    Number(values.quality) > 100
-  ) {
+  if (!Number(values.quality) || Number(values.quality) < 1 || Number(values.quality) > 100) {
     console.error("Invalid quality");
     showHelp();
     process.exit(1);
@@ -104,10 +97,7 @@ const validateArgs = (): Args => {
         width: Number(split[0].trim()),
         height: Number(split[1].trim()),
       };
-      if (
-        (!result.width || result.width <= 0) &&
-        (!result.height || result.height <= 0)
-      ) {
+      if ((!result.width || result.width <= 0) && (!result.height || result.height <= 0)) {
         throw new Error();
       }
       return result;
@@ -118,9 +108,7 @@ const validateArgs = (): Args => {
     }
   });
   return {
-    inputPaths: values.input.map((filePath) =>
-      path.resolve(process.cwd(), filePath),
-    ),
+    inputPaths: values.input.map((filePath) => path.resolve(process.cwd(), filePath)),
     outputPath: path.resolve(process.cwd(), values.output),
     fileType: values.type as OutputFileType,
     quality: Number(values.quality),
